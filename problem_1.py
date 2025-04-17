@@ -232,70 +232,41 @@ def acceptance_probability(delta, temperature):
     return math.exp(delta / temperature)
 
 
-# Initialize the solution
-x_curr = initial_solution_random(0.2)  # Current solution
-x_best = x_curr[:]                  # Best solution found so far
-f_curr = evaluate(x_curr)           # Current solution evaluation
-f_best = f_curr[:]                  # Best solution evaluation found so far
-solutionsChecked = 0                # Counter for number of solutions evaluated
+#varaible to record the number of solutions evaluated
+solutionsChecked = 0
 
-# Simulated annealing parameters
-initial_temp = initial_temperature(x_curr)  # Calculate initial temperature
-temp = initial_temp                         # Current temperature
-print("Initial temperature:", initial_temp)
-print("Initial solution value:", f_curr[0])
-print("Initial solution weight:", f_curr[1])
-min_temp = 0.01                             # Minimum temperature (stopping criterion)
-alpha = 0.95                                # Cooling rate
-detiriorate = 0.1                            # Probability of deterioration
-iterations_per_temp = 100                   # (Mk) Number of iterations at each temperature level
-max_iterations = 10000                      # Maximum number of iterations
-iterations = 0                      # Iteration counter
+x_curr = initial_solution()  #x_curr will hold the current solution
+x_best = x_curr[:]           #x_best will hold the best solution
+f_curr = evaluate(x_curr)    #f_curr will hold the evaluation of the current soluton
+f_best = f_curr[:]
 
 
-print("Starting Simulated Annealing")
-print("Initial temperature:", initial_temp)
-print("Initial solution value:", f_curr[0])
-print("Initial solution weight:", f_curr[1])
 
-# Begin simulated annealing
-while temp > min_temp and iterations < max_iterations:
-    iterations += 1
-    print(f"Iteration: {iterations}, Temperature: {temp:.4f}")
+#begin local search overall logic ----------------
+done = 0
 
-    # Perform multiple iterations at each temperature
-    for _ in range(iterations_per_temp):
+while done == 0:
 
-        # Select random neighbor (instead of evaluating entire neighborhood)
-        idx = myPRNG.randint(0, n-1)  # Select random index to flip
-        s = x_curr[:]
-        s[idx] = 1 - s[idx]  # Flip the bit
+    Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
 
-        # Evaluate the neighbor
-        solutionsChecked += 1
-        f_s = evaluate(s)
+    for s in Neighborhood:                #evaluate every member in the neighborhood of x_curr
+        solutionsChecked = solutionsChecked + 1
+        if evaluate(s)[0] > f_best[0]:
+            x_best = s[:]                 #find the best member and keep track of that solution
+            f_best = evaluate(s)[:]       #and store its evaluation
 
-        # Calculate change in objective value
-        delta = f_s[0] - f_curr[0]
+    if f_best == f_curr:                  #if there were no improving solutions in the neighborhood
+        done = 1
+    else:
 
-        # Determine whether to accept the new solution
-        if myPRNG.random() < acceptance_probability(delta, temp):
-            x_curr = s[:]
-            f_curr = f_s[:]
+        x_curr = x_best[:]         #else: move to the neighbor solution and continue
+        f_curr = f_best[:]         #evalute the current solution
 
-            # Update best solution if current solution is better
-            if f_curr[0] > f_best[0]:
-                x_best = x_curr[:]
-                f_best = f_curr[:]
-                print("New best solution found at temperature", temp)
-                print("Value:", f_best[0], "Weight:", f_best[1])
+        print ("\nTotal number of solutions checked: ", solutionsChecked)
+        print ("Best value found so far: ", f_best)
 
-    # Cool down temperature according to cooling schedule
-    temp = cooling_schedule(temp, alpha)
-    print(f"Temperature: {temp:.4f}, Best value: {f_best[0]}")
-
-print("\nFinal number of solutions checked:", solutionsChecked)
-print("Best value found:", f_best[0])
-print("Weight is:", f_best[1])
-print("Total number of items selected:", np.sum(x_best))
-print("Best solution:", x_best)
+print ("\nFinal number of solutions checked: ", solutionsChecked)
+print ("Best value found: ", f_best[0])
+print ("Weight is: ", f_best[1])
+print ("Total number of items selected: ", np.sum(x_best))
+print ("Best solution: ", x_best)
