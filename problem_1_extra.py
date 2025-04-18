@@ -20,7 +20,10 @@ import copy
 from random import Random   #need this for the random number generation -- do not change
 import numpy as np
 import math
-
+# plotting the results
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 #to setup a random number generator, we will specify a "seed" value
 #need this for the random number generation -- do not change
@@ -290,19 +293,19 @@ def simulated_annealing(initial_solution_percentage=0.2, cooling_rate=0.95, min_
     """
     Main function to run the simulated annealing algorithm.
     """
+
+    print("Simulated Annealing Algorithm with configs : ", initial_solution_percentage, cooling_rate, min_temp, max_iterations, Mk)
     # Initialize variables
     #varaible to record the number of solutions evaluated
     solutionsChecked = 0
+    iterations = 0
 
-
-    initial_solution_percentage = 0.2  # percentage of items to select for the initial solution
+    # Create initial solution
     x_curr = initial_solution_random(initial_solution_percentage)  #x_curr will hold the current solution
     x_best = x_curr[:]           #x_best will hold the best solution
     f_curr = evaluate(x_curr)    #f_curr will hold the evaluation of the current soluton
     f_best = f_curr[:]
-    print("Initial solution: ", x_curr)
-    print("Initial solution weight: ", f_curr[1])
-    print("Initial solution value: ", f_curr[0])
+
 
     current_temperature = initial_temperature(x_curr)  #set the current temperature
     init_temperature = current_temperature #store the initial temperature
@@ -319,9 +322,7 @@ def simulated_annealing(initial_solution_percentage=0.2, cooling_rate=0.95, min_
     while done == 0:
 
         m = 0
-        print("iteration: ", iterations)
-        print("current temperature: ", current_temperature)
-        print("Best value so far: ", f_best[0])
+        # print("iteration: %d , temp: %d , bestVal: %d", iterations, current_temperature, f_best[0])
         Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
 
         while m < Mk:
@@ -356,3 +357,140 @@ def simulated_annealing(initial_solution_percentage=0.2, cooling_rate=0.95, min_
     print ("Best solution: ", x_best)
 
     return [x_best, f_best, iterations, solutionsChecked, init_temperature]
+
+# run the simulated annealing algorithm with different parameters
+# init_solution_range = list(range(1, 30, 1))  # creates [0.01, 0.02, ..., 0.29]
+init_solution_range = list(range(5, 30, 10))  # creates [0.01, 0.02, ..., 0.29]
+
+# Different min temperatures from 0.01 to 1
+min_temps = [0.01, 0.1, 0.5]
+
+# Different max iterations from 100 to 1000
+max_iterations = list(range(100, 1100, 200))  # creates [100, 300, 500, 700, 900]
+
+# Different Mk values from 10 to 50
+Mk_values = [10] #list(range(10, 51, 10))  # creates [10, 20, 30, 40, 50]
+
+#create a DataFrame to store the results
+results_df = pd.DataFrame(columns=["Initial Solution Percentage", "Cooling Rate", "Min Temp", "Max Iterations", "Mk", "Best Value", "Weight", "Total Items Selected"])
+# Run the simulated annealing algorithm with different parameters
+for init_sol_perc in init_solution_range:
+    # Run simulated annealing to get results
+    results = simulated_annealing(
+        initial_solution_percentage=init_sol_perc/100,
+        cooling_rate=0.95,
+        min_temp=min_temps[0],
+        max_iterations=max_iterations[0],
+        Mk=Mk_values[0]
+    )
+
+    # Create a single-row DataFrame with the new results
+    new_row = pd.DataFrame({
+        "Initial Solution Percentage": [init_sol_perc],  # Use list to create proper Series
+        "Cooling Rate": [0.95],  # Each value needs to be in a list
+        "Min Temp": [min_temps[0]],
+        "Max Iterations": [max_iterations[0]],
+        "Mk": [Mk_values[0]],
+        "Best Value": [results[1][0]],
+        "Weight": [results[1][1]],
+        "Total Items Selected": [np.sum(results[0])]
+    })
+
+    # Use pd.concat to append the new row
+    results_df = pd.concat([results_df, new_row], ignore_index=True)
+
+# Plotting the results
+# results_df plotting
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Initial Solution Percentage", y="Best Value", hue="Cooling Rate", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Initial Solution Percentage")
+plt.xlabel("Initial Solution Percentage")
+plt.ylabel("Best Value")
+plt.legend(title="Cooling Rate and Mk")
+plt.grid()
+plt.show()
+
+
+#-----------------------------------------------------------
+# Set the style of seaborn
+sns.set(style="whitegrid")
+# Create a DataFrame to store the results
+results_df = pd.DataFrame(columns=["Initial Solution Percentage", "Cooling Rate", "Min Temp", "Max Iterations", "Mk", "Best Value", "Weight", "Total Items Selected"])
+# Append the results to the DataFrame
+for init_sol_perc in init_solution_range:
+    for min_temp in min_temps:
+        for max_iter in max_iterations:
+            for mk in Mk_values:
+                results = simulated_annealing(
+                    initial_solution_percentage=init_sol_perc/100,
+                    cooling_rate=0.95,
+                    min_temp=min_temp,
+                    max_iterations=max_iter,
+                    Mk=mk
+                )
+                # Append the results to the DataFrame
+                new_row = pd.DataFrame({
+                    "Initial Solution Percentage": [init_sol_perc],
+                    "Cooling Rate": [0.95],
+                    "Min Temp": [min_temp],
+                    "Max Iterations": [max_iter],
+                    "Mk": [mk],
+                    "Best Value": [results[1][0]],
+                    "Weight": [results[1][1]],
+                    "Total Items Selected": [np.sum(results[0])]
+                })
+                results_df = pd.concat([results_df, new_row], ignore_index=True)
+# Plotting the results
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Initial Solution Percentage", y="Best Value", hue="Cooling Rate", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Initial Solution Percentage")
+plt.xlabel("Initial Solution Percentage")
+plt.ylabel("Best Value")
+plt.legend(title="Cooling Rate and Mk")
+plt.grid()
+plt.show()
+# Plotting the results
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Cooling Rate", y="Best Value", hue="Initial Solution Percentage", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Cooling Rate")
+plt.xlabel("Cooling Rate")
+plt.ylabel("Best Value")
+plt.legend(title="Initial Solution Percentage and Mk")
+plt.grid()
+plt.show()
+# Plotting the results
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Min Temp", y="Best Value", hue="Initial Solution Percentage", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Min Temp")
+plt.xlabel("Min Temp")
+plt.ylabel("Best Value")
+
+
+plt.legend(title="Initial Solution Percentage and Mk")
+plt.grid()
+
+plt.show()
+# Plotting the results
+
+
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Max Iterations", y="Best Value", hue="Initial Solution Percentage", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Max Iterations")
+plt.xlabel("Max Iterations")
+plt.ylabel("Best Value")
+plt.legend(title="Initial Solution Percentage and Mk")
+plt.grid()
+plt.show()
+# Plotting the results
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Mk", y="Best Value", hue="Initial Solution Percentage", style="Cooling Rate", markers=True, dashes=False)
+plt.title("Best Value vs Mk")
+plt.xlabel("Mk")
+plt.ylabel("Best Value")
+plt.legend(title="Initial Solution Percentage and Cooling Rate")
+plt.grid()
+plt.show()
+# Save the results to a CSV file
+results_df.to_csv("simulated_annealing_results.csv", index=False)
+
+
