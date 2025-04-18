@@ -371,10 +371,13 @@ max_iterations = list(range(100, 1100, 200))  # creates [100, 300, 500, 700, 900
 # Different Mk values from 10 to 50
 Mk_values = [10, 25, 50] #list(range(10, 51, 10))  # creates [10, 20, 30, 40, 50]
 
+# Cooling rates
+cooling_rates = [0.95, 0.99, 0.999]  # list(range(0.9, 1.1, 0.01))  # creates [0.9, 0.91, ..., 1.09]
+
 #create a DataFrame to store the results
 results_df = pd.DataFrame(columns=["Initial Solution Percentage", "Cooling Rate", "Min Temp", "Max Iterations", "Mk", "Best Value", "Weight", "Total Items Selected"])
 # Run the simulated annealing algorithm with different parameters
-for init_sol_perc in init_solution_range:
+for init_sol_perc in list(range(1, 50, 2)):
     # Run simulated annealing to get results
     results = simulated_annealing(
         initial_solution_percentage=init_sol_perc/100,
@@ -421,25 +424,26 @@ for init_sol_perc in init_solution_range:
     for min_temp in min_temps:
         for max_iter in max_iterations:
             for mk in Mk_values:
-                results = simulated_annealing(
-                    initial_solution_percentage=init_sol_perc/100,
-                    cooling_rate=0.95,
-                    min_temp=min_temp,
-                    max_iterations=max_iter,
-                    Mk=mk
-                )
-                # Append the results to the DataFrame
-                new_row = pd.DataFrame({
-                    "Initial Solution Percentage": [init_sol_perc],
-                    "Cooling Rate": [0.95],
-                    "Min Temp": [min_temp],
-                    "Max Iterations": [max_iter],
-                    "Mk": [mk],
-                    "Best Value": [results[1][0]],
-                    "Weight": [results[1][1]],
-                    "Total Items Selected": [np.sum(results[0])]
-                })
-                results_df = pd.concat([results_df, new_row], ignore_index=True)
+              for cooling_rate in cooling_rates:
+                  results = simulated_annealing(
+                      initial_solution_percentage=init_sol_perc/100,
+                      cooling_rate=cooling_rate,
+                      min_temp=min_temp,
+                      max_iterations=max_iter,
+                      Mk=mk
+                  )
+                  # Append the results to the DataFrame
+                  new_row = pd.DataFrame({
+                      "Initial Solution Percentage": [init_sol_perc],
+                      "Cooling Rate": [cooling_rate],
+                      "Min Temp": [min_temp],
+                      "Max Iterations": [max_iter],
+                      "Mk": [mk],
+                      "Best Value": [results[1][0]],
+                      "Weight": [results[1][1]],
+                      "Total Items Selected": [np.sum(results[0])]
+                  })
+                  results_df = pd.concat([results_df, new_row], ignore_index=True)
 # Plotting the results
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=results_df, x="Initial Solution Percentage", y="Best Value", hue="Cooling Rate", style="Mk", markers=True, dashes=False)
