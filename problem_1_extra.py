@@ -369,7 +369,7 @@ min_temps = [0.01, 0.1, 0.5]
 max_iterations = list(range(100, 1100, 200))  # creates [100, 300, 500, 700, 900]
 
 # Different Mk values from 10 to 50
-Mk_values = [10] #list(range(10, 51, 10))  # creates [10, 20, 30, 40, 50]
+Mk_values = [10, 25, 50] #list(range(10, 51, 10))  # creates [10, 20, 30, 40, 50]
 
 #create a DataFrame to store the results
 results_df = pd.DataFrame(columns=["Initial Solution Percentage", "Cooling Rate", "Min Temp", "Max Iterations", "Mk", "Best Value", "Weight", "Total Items Selected"])
