@@ -235,35 +235,47 @@ def acceptance_probability(delta, temperature):
 #varaible to record the number of solutions evaluated
 solutionsChecked = 0
 
-x_curr = initial_solution()  #x_curr will hold the current solution
+x_curr = initial_solution_random(0.2)  #x_curr will hold the current solution
 x_best = x_curr[:]           #x_best will hold the best solution
 f_curr = evaluate(x_curr)    #f_curr will hold the evaluation of the current soluton
 f_best = f_curr[:]
 
 
+current_temperature = initial_temperature(x_curr)  #set the current temperature
+min_temp = 0.01              # Minimum temperature (stopping criterion)
+max_iterations = 100000       # Maximum number of iterations
+iterations = 0               # Iteration counter
+Mk = 150                     # number of neighbors to check in each temperature
 
 #begin local search overall logic ----------------
 done = 0
 
 while done == 0:
 
+    m = 0
     Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
+    print("iteration: ", iterations)
+    print("current temperature: ", current_temperature)
+    print("Best solution so far: ", x_best)
+    print("Best value so far: ", f_best[0])
+    while m < Mk:
 
-    for s in Neighborhood:                #evaluate every member in the neighborhood of x_curr
-        solutionsChecked = solutionsChecked + 1
-        if evaluate(s)[0] > f_best[0]:
-            x_best = s[:]                 #find the best member and keep track of that solution
-            f_best = evaluate(s)[:]       #and store its evaluation
-
-    if f_best == f_curr:                  #if there were no improving solutions in the neighborhood
+        s = myPRNG.choice(Neighborhood)  #randomly select a member of the neighborhood
+        if evaluate(s)[0] > f_curr[0]:  #if the randomly selected member is better than the current solution
+            x_curr = s[:]                 #move to the randomly selected member
+            f_curr = evaluate(s)[:]       #evaluate the new current solution
+        else:     # now we try to use a deteriorative solution
+            delta = evaluate(s)[0] - f_curr[0]
+            epsilon = myPRNG.uniform(0, 1)
+            if epsilon < acceptance_probability(delta, current_temperature):
+                x_curr = s[:]
+                f_curr = evaluate(s)[:]
+        m += 1
+        solutionsChecked += 1
+    iterations += 1
+    current_temperature = cooling_schedule(current_temperature)  #cool the system
+    if current_temperature < min_temp or iterations > max_iterations:
         done = 1
-    else:
-
-        x_curr = x_best[:]         #else: move to the neighbor solution and continue
-        f_curr = f_best[:]         #evalute the current solution
-
-        print ("\nTotal number of solutions checked: ", solutionsChecked)
-        print ("Best value found so far: ", f_best)
 
 print ("\nFinal number of solutions checked: ", solutionsChecked)
 print ("Best value found: ", f_best[0])
