@@ -108,7 +108,10 @@ def neighborhood1flip(x):
     nbrhood = []
     for i in range(0,n):
         nbrhood.append(x[:])
-        nbrhood[i][i] == 1 - nbrhood[i][i]  # flip bit i:
+        if nbrhood[i][i] == 1:
+            nbrhood[i][i] = 0
+        else:
+            nbrhood[i][i] = 1
     return nbrhood
 
 #2-flip neighborhood of solution x
@@ -148,8 +151,18 @@ def initial_solution_random(percentage=0.1):
             continue  # if the item is already selected, select another item
         if totalWeight >= maxWeight: # break if the weight limit is reached
             break
+
+    # repair the solution if it is infeasible
+    if evaluate(x)[1] > maxWeight:
+        print("Repairing solution...")
+        x = repair(x)
+        print("Repaired solution: ", x)
+        print("Repaired solution weight: ", evaluate(x)[1])
+        print("Repaired solution value: ", evaluate(x)[0])
+
     print("Initial solution: ", x)
     print("Initial solution weight: ", evaluate(x)[1])
+    print("Initial solution value: ", evaluate(x)[0])
 
     return x   #return the solution
 
@@ -236,13 +249,18 @@ x_curr = initial_solution_random(0.2)  #x_curr will hold the current solution
 x_best = x_curr[:]           #x_best will hold the best solution
 f_curr = evaluate(x_curr)    #f_curr will hold the evaluation of the current soluton
 f_best = f_curr[:]
-
-
+print("Initial solution: ", x_curr)
+print("Initial solution weight: ", f_curr[1])
+print("Initial solution value: ", f_curr[0])
+neighboors = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
+for i in range(0, 10):
+    print(neighboors[i])
+# exit()
 current_temperature = initial_temperature(x_curr)  #set the current temperature
 min_temp = 0.01              # Minimum temperature (stopping criterion)
-max_iterations = 100000       # Maximum number of iterations
+max_iterations = 1000       # Maximum number of iterations
 iterations = 0               # Iteration counter
-Mk = 150                     # number of neighbors to check in each temperature
+Mk = 1000                     # number of neighbors to check in each temperature
 
 #begin local search overall logic ----------------
 done = 0
@@ -250,20 +268,26 @@ done = 0
 while done == 0:
 
     m = 0
-    Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
     print("iteration: ", iterations)
     print("current temperature: ", current_temperature)
-    print("Best solution so far: ", x_best)
     print("Best value so far: ", f_best[0])
-    while m < Mk:
+    Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
 
-        s = myPRNG.choice(Neighborhood)  #randomly select a member of the neighborhood
+    while m < Mk:
+        randIndex = myPRNG.randint(0, len(Neighborhood)-1)  #select a random index from the neighborhood
+        s = Neighborhood[randIndex][:]
         if evaluate(s)[0] > f_curr[0]:  #if the randomly selected member is better than the current solution
             x_curr = s[:]                 #move to the randomly selected member
             f_curr = evaluate(s)[:]       #evaluate the new current solution
+            # print("Found a better solution than current, moving: ", f_curr[0])
+            if f_curr[0] > f_best[0]:
+                # print("Found a better solution: ", s)
+                x_best = x_curr[:]             #update the best solution
+                f_best = evaluate(x_curr)[:]
         else:     # now we try to use a deteriorative solution
             delta = evaluate(s)[0] - f_curr[0]
             epsilon = myPRNG.uniform(0, 1)
+            # if the solution is worse than the current solution, we will accept it with a certain probability
             if epsilon < acceptance_probability(delta, current_temperature):
                 x_curr = s[:]
                 f_curr = evaluate(s)[:]
