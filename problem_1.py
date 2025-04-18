@@ -101,17 +101,14 @@ def neighborhood(x):
     #return neighborhood2flip(x)
 
 #1-flip neighborhood of solution x
+# this function is the the same as the on Dr Nicholson provided in the base code
+# just more succinct
 def neighborhood1flip(x):
 
     nbrhood = []
-
     for i in range(0,n):
         nbrhood.append(x[:])
-        if nbrhood[i][i] == 1:
-            nbrhood[i][i] = 0
-        else:
-            nbrhood[i][i] = 1
-
+        nbrhood[i][i] == 1 - nbrhood[i][i]  # flip bit i:
     return nbrhood
 
 #2-flip neighborhood of solution x
