@@ -245,7 +245,7 @@ def acceptance_probability(delta, temperature):
 #varaible to record the number of solutions evaluated
 solutionsChecked = 0
 
-x_curr = initial_solution_random(0.2)  #x_curr will hold the current solution
+x_curr = initial_solution_random(0.05)  #x_curr will hold the current solution
 x_best = x_curr[:]           #x_best will hold the best solution
 f_curr = evaluate(x_curr)    #f_curr will hold the evaluation of the current soluton
 f_best = f_curr[:]
