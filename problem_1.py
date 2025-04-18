@@ -245,22 +245,22 @@ def acceptance_probability(delta, temperature):
 #varaible to record the number of solutions evaluated
 solutionsChecked = 0
 
-x_curr = initial_solution_random(0.05)  #x_curr will hold the current solution
+x_curr = initial_solution_random(0.2)  #x_curr will hold the current solution
 x_best = x_curr[:]           #x_best will hold the best solution
 f_curr = evaluate(x_curr)    #f_curr will hold the evaluation of the current soluton
 f_best = f_curr[:]
 print("Initial solution: ", x_curr)
 print("Initial solution weight: ", f_curr[1])
 print("Initial solution value: ", f_curr[0])
-neighboors = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
-for i in range(0, 10):
-    print(neighboors[i])
-# exit()
+
 current_temperature = initial_temperature(x_curr)  #set the current temperature
+print("Initial temperature: ", current_temperature)
+# Simulated Annealing parameters
+cooling_rate = 0.95         # Cooling rate
 min_temp = 0.01              # Minimum temperature (stopping criterion)
 max_iterations = 1000       # Maximum number of iterations
 iterations = 0               # Iteration counter
-Mk = 1000                     # number of neighbors to check in each temperature
+Mk = 10                     # number of neighbors to check in each temperature
 
 #begin local search overall logic ----------------
 done = 0
@@ -294,7 +294,7 @@ while done == 0:
         m += 1
         solutionsChecked += 1
     iterations += 1
-    current_temperature = cooling_schedule(current_temperature)  #cool the system
+    current_temperature = cooling_schedule(current_temperature, cooling_rate)  #cool the system
     if current_temperature < min_temp or iterations > max_iterations:
         done = 1
 
