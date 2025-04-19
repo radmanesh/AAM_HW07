@@ -11,8 +11,8 @@
 
 #------------------------------------------------------------------------------
 
-#Student name: Ali Abdullah, Arman Radmanesh, and Lakshmi Sahasra Jangoan
-#Date: 04-04-2025
+#Student name: Arman Radmanesh, Ali Abdullah
+#Date: 04-16-2025
 
 
 #need some python libraries
@@ -112,18 +112,6 @@ def neighborhood1flip(x):
             nbrhood[i][i] = 0
         else:
             nbrhood[i][i] = 1
-    return nbrhood
-
-#2-flip neighborhood of solution x
-def neighborhood2flip(x):
-
-    nbrhood = []
-    for i in range(n):
-        for j in range(i + 1, n):       # ensures j > i to avoid duplicate pairs
-            neighbor = x[:]             # copy the current solution
-            neighbor[i] = 1 - neighbor[i]  # flip bit i
-            neighbor[j] = 1 - neighbor[j]  # flip bit j
-            nbrhood.append(neighbor)    # store the modified neighbor
     return nbrhood
 
 
@@ -336,6 +324,7 @@ while done == 0:
                 f_curr = evaluate(s)[:]
         m += 1
         solutionsChecked += 1
+
     iterations += 1
     current_temperature = cooling_schedule(current_temperature, cooling_rate)  #cool the system
     if current_temperature < min_temp or iterations > max_iterations:

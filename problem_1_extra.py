@@ -11,8 +11,8 @@
 
 #------------------------------------------------------------------------------
 
-#Student name: Ali Abdullah, Arman Radmanesh, and Lakshmi Sahasra Jangoan
-#Date: 04-04-2025
+#Student name: Arman Radmanesh, Ali Abdullah
+#Date: 04-16-2025
 
 
 #need some python libraries
