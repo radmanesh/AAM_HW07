@@ -208,33 +208,32 @@ def cooling_schedule(current_temp, alpha=0.95):
     """
     return current_temp * alpha
 
-# Linear Cooling schedule function
-def cooling_schedule_linear(current_temp, initial_temp):
+# Cauchy Cooling schedule function
+def cooling_schedule_cauchy(current_temp, initial_temp, k):
     """
-    Implements a cooling schedule based on the initial temperature.
-
+    Implements a cooling schedule based on the Cauchy distribution.
     Args:
         current_temp: The current temperature
         initial_temp: The initial temperature
-
+        k: The iteration number
     Returns:
         The new temperature
     """
-    return current_temp - (initial_temp / 1000)  # Decrease temperature linearly:
+    # Cauchy cooling schedule
+    return initial_temp / (1 + k)  # Cauchy cooling
 
-# Exponential Cooling schedule function
-def cooling_schedule_exponential(current_temp, initial_temp):
+# Boltzmann Cooling schedule function
+def cooling_schedule_boltzmann(current_temp, initial_temp, k):
     """
-    Implements a cooling schedule based on the initial temperature.
-
+    Implements a cooling schedule based on the Boltzmann distribution.
     Args:
         current_temp: The current temperature
         initial_temp: The initial temperature
-
+        k: The iteration number
     Returns:
         The new temperature
     """
-    return current_temp * (1 - (current_temp / initial_temp))  # Exponential cooling
+    return initial_temp / math.log(1 + k)  # Boltzmann cooling
 
 # Ali's Cooling schedule function
 def cooling_schedule_Ali(current_temp, initial_temp):
@@ -283,13 +282,15 @@ print("Initial solution weight: ", f_curr[1])
 print("Initial solution value: ", f_curr[0])
 
 current_temperature = initial_temperature(x_curr)  #set the current temperature
+initial_temp = current_temperature # store the initial temperature
 print("Initial temperature: ", current_temperature)
+
 # Simulated Annealing parameters
 cooling_rate = 0.95         # Cooling rate
 min_temp = 0.01              # Minimum temperature (stopping criterion)
 max_iterations = 1000       # Maximum number of iterations
-iterations = 0               # Iteration counter
-Mk = 10                     # number of neighbors to check in each temperature
+k = 0               # Iteration counter
+Mk = 50                     # number of neighbors to check in each temperature
 
 #begin local search overall logic ----------------
 done = 0
@@ -297,7 +298,7 @@ done = 0
 while done == 0:
 
     m = 0
-    print("iteration: ", iterations)
+    print("iteration: ", k)
     print("current temperature: ", current_temperature)
     print("Best value so far: ", f_best[0])
     Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
@@ -323,11 +324,13 @@ while done == 0:
         m += 1
         solutionsChecked += 1
 
-    iterations += 1
-    current_temperature = cooling_schedule(current_temperature, cooling_rate)  #cool the system
-    if current_temperature < min_temp or iterations > max_iterations:
+    k += 1
+    # current_temperature = cooling_schedule_cauchy(current_temperature, initial_temp, k)  #cool the system
+    current_temperature = cooling_schedule_boltzmann(current_temperature, initial_temp, k)  #cool the system
+    if current_temperature < min_temp or k > max_iterations:
         done = 1
 
+print("\nInitial temperature: ", initial_temp)
 print ("\nFinal number of solutions checked: ", solutionsChecked)
 print ("Best value found: ", f_best[0])
 print ("Weight is: ", f_best[1])
