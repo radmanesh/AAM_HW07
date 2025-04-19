@@ -301,8 +301,10 @@ while done == 0:
     print("iteration: ", k)
     print("current temperature: ", current_temperature)
     print("Best value so far: ", f_best[0])
+    print("Mk: ", int(10+5*initial_temp/current_temperature))
     Neighborhood = neighborhood(x_curr)   #create a list of all neighbors in the neighborhood of x_curr
 
+    # while m < int(10+1000/current_temperature):
     while m < Mk:
         randIndex = myPRNG.randint(0, len(Neighborhood)-1)  #select a random index from the neighborhood
         s = Neighborhood[randIndex][:]

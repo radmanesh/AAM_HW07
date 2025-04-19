@@ -104,8 +104,6 @@ def neighborhood(x):
     #return neighborhood2flip(x)
 
 #1-flip neighborhood of solution x
-# this function is the the same as the on Dr Nicholson provided in the base code
-# just more succinct
 def neighborhood1flip(x):
 
     nbrhood = []
@@ -225,33 +223,32 @@ def cooling_schedule(current_temp, alpha=0.95):
     """
     return current_temp * alpha
 
-# Linear Cooling schedule function
-def cooling_schedule_linear(current_temp, initial_temp):
+# Cauchy Cooling schedule function
+def cooling_schedule_cauchy(current_temp, initial_temp, k):
     """
-    Implements a cooling schedule based on the initial temperature.
-
+    Implements a cooling schedule based on the Cauchy distribution.
     Args:
         current_temp: The current temperature
         initial_temp: The initial temperature
-
+        k: The iteration number
     Returns:
         The new temperature
     """
-    return current_temp - (initial_temp / 1000)  # Decrease temperature linearly:
+    # Cauchy cooling schedule
+    return initial_temp / (1 + k)  # Cauchy cooling
 
-# Exponential Cooling schedule function
-def cooling_schedule_exponential(current_temp, initial_temp):
+# Boltzmann Cooling schedule function
+def cooling_schedule_boltzmann(current_temp, initial_temp, k):
     """
-    Implements a cooling schedule based on the initial temperature.
-
+    Implements a cooling schedule based on the Boltzmann distribution.
     Args:
         current_temp: The current temperature
         initial_temp: The initial temperature
-
+        k: The iteration number
     Returns:
         The new temperature
     """
-    return current_temp * (1 - (current_temp / initial_temp))  # Exponential cooling
+    return initial_temp / math.log(1 + k)  # Boltzmann cooling
 
 # Ali's Cooling schedule function
 def cooling_schedule_Ali(current_temp, initial_temp):
@@ -289,7 +286,7 @@ def acceptance_probability(delta, temperature):
 
 # Simulated Annealing Algorithm
 # Main function
-def simulated_annealing(initial_solution_percentage=0.2, cooling_rate=0.95, min_temp=0.01, max_iterations=1000, Mk=10):
+def simulated_annealing(initial_solution_percentage=0.2, cooling_rate=0.95, min_temp=0.01, max_iterations=1000, Mk=10, cooling_schedule_type='geometric'):
     """
     Main function to run the simulated annealing algorithm.
     """
@@ -346,7 +343,15 @@ def simulated_annealing(initial_solution_percentage=0.2, cooling_rate=0.95, min_
             m += 1
             solutionsChecked += 1
         iterations += 1
-        current_temperature = cooling_schedule(current_temperature, cooling_rate)  #cool the system
+        match cooling_schedule_type:
+            case 'geometric':
+                current_temperature = cooling_schedule(current_temperature, cooling_rate)
+            case 'cauchy':
+                current_temperature = cooling_schedule_cauchy(current_temperature, init_temperature, iterations)
+            case 'boltzmann':
+                current_temperature = cooling_schedule_boltzmann(current_temperature, init_temperature, iterations)
+            case 'Ali':
+                current_temperature = cooling_schedule_Ali(current_temperature, init_temperature)
         if current_temperature < min_temp or iterations > max_iterations:
             done = 1
 
@@ -369,7 +374,7 @@ min_temps = [0.01, 0.1, 0.5]
 max_iterations = list(range(100, 1100, 200))  # creates [100, 300, 500, 700, 900]
 
 # Different Mk values from 10 to 50
-Mk_values = [10, 25, 50] #list(range(10, 51, 10))  # creates [10, 20, 30, 40, 50]
+Mk_values = list(range(5, 105, 5))  # creates [10, 20, 30, 40, 50]
 
 # Cooling rates
 cooling_rates = [0.95, 0.99, 0.999]  # list(range(0.9, 1.1, 0.01))  # creates [0.9, 0.91, ..., 1.09]
@@ -377,73 +382,167 @@ cooling_rates = [0.95, 0.99, 0.999]  # list(range(0.9, 1.1, 0.01))  # creates [0
 #create a DataFrame to store the results
 results_df = pd.DataFrame(columns=["Initial Solution Percentage", "Cooling Rate", "Min Temp", "Max Iterations", "Mk", "Best Value", "Weight", "Total Items Selected"])
 # Run the simulated annealing algorithm with different parameters
-for init_sol_perc in list(range(1, 50, 2)):
+for cooling_type in ['geometric', 'cauchy', 'boltzmann']:
+    for init_sol_perc in list(range(1, 30, 1)):
+        # Run simulated annealing to get results
+        results = simulated_annealing(
+            initial_solution_percentage=init_sol_perc/100,
+            cooling_rate=0.95,
+            min_temp=min_temps[0],
+            max_iterations=1000,
+            Mk=50,
+            cooling_schedule_type=cooling_type
+        )
+
+        # Create a single-row DataFrame with the new results
+        new_row = pd.DataFrame({
+            "Initial Solution Percentage": [init_sol_perc],  # Use list to create proper Series
+            "Cooling Rate": [0.95],  # Each value needs to be in a list
+            "Min Temp": [min_temps[0]],
+            "Max Iterations": [1000],
+            "Mk": [50],
+            "Best Value": [results[1][0]],
+            "Weight": [results[1][1]],
+            "Total Items Selected": [np.sum(results[0])],
+            "Cooling Type": [cooling_type]
+        })
+
+        # Use pd.concat to append the new row
+        results_df = pd.concat([results_df, new_row], ignore_index=True)
+
+# Plotting the results
+# Plot initial solution percentage vs best value for different cooling types for geometric cooling
+# filter the DataFrame for geometric cooling
+geometric_df = results_df[results_df["Cooling Type"] == "geometric"]
+boltzmann_df = results_df[results_df["Cooling Type"] == "boltzmann"]
+cauchy_df = results_df[results_df["Cooling Type"] == "cauchy"]
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=geometric_df, x="Initial Solution Percentage", y="Best Value",  style="Cooling Type", markers=True, dashes=False)
+sns.lineplot(data=boltzmann_df, x="Initial Solution Percentage", y="Best Value",  style="Cooling Type", markers=True, dashes=False)
+sns.lineplot(data=cauchy_df, x="Initial Solution Percentage", y="Best Value",  style="Cooling Type", markers=True, dashes=False)
+plt.title("Best Value vs Initial Solution Percentage")
+plt.xlabel("Initial Solution Percentage")
+plt.ylabel("Best Value")
+plt.legend(title="Cooling Type")
+plt.grid()
+plt.show()
+
+for cooling_rate in range(50, 101, 2):
     # Run simulated annealing to get results
     results = simulated_annealing(
-        initial_solution_percentage=init_sol_perc/100,
-        cooling_rate=0.95,
+        initial_solution_percentage=20/100,
+        cooling_rate=cooling_rate/100,
         min_temp=min_temps[0],
         max_iterations=max_iterations[0],
-        Mk=Mk_values[0]
+        Mk=50,
+        cooling_schedule_type='geometric'
     )
 
     # Create a single-row DataFrame with the new results
     new_row = pd.DataFrame({
-        "Initial Solution Percentage": [init_sol_perc],  # Use list to create proper Series
-        "Cooling Rate": [0.95],  # Each value needs to be in a list
+        "Initial Solution Percentage": [0.2],  # Use list to create proper Series
+        "Cooling Rate": [cooling_rate/100],  # Each value needs to be in a list
         "Min Temp": [min_temps[0]],
         "Max Iterations": [max_iterations[0]],
-        "Mk": [Mk_values[0]],
+        "Mk": [50],
         "Best Value": [results[1][0]],
         "Weight": [results[1][1]],
-        "Total Items Selected": [np.sum(results[0])]
+        "Total Items Selected": [np.sum(results[0])],
+        "Cooling Type": ['geometric']
     })
 
     # Use pd.concat to append the new row
     results_df = pd.concat([results_df, new_row], ignore_index=True)
 
 # Plotting the results
-# results_df plotting
 plt.figure(figsize=(12, 6))
-sns.lineplot(data=results_df, x="Initial Solution Percentage", y="Best Value", hue="Cooling Rate", style="Mk", markers=True, dashes=False)
-plt.title("Best Value vs Initial Solution Percentage")
-plt.xlabel("Initial Solution Percentage")
+sns.lineplot(data=results_df, x="Cooling Rate", y="Best Value", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Cooling Rate")
+plt.xlabel("Cooling Rate")
 plt.ylabel("Best Value")
-plt.legend(title="Cooling Rate and Mk")
+plt.legend(title="Initial Solution Percentage and Mk")
 plt.grid()
 plt.show()
 
+for cooling_type in ['geometric', 'cauchy', 'boltzmann']:
+  for mk in Mk_values:
+      # Run simulated annealing to get results
+      results = simulated_annealing(
+          initial_solution_percentage=10/100,
+          cooling_rate=0.95,
+          min_temp=min_temps[0],
+          max_iterations=1000,
+          Mk=mk,
+          cooling_schedule_type=cooling_type
+      )
+
+      # Create a single-row DataFrame with the new results
+      new_row = pd.DataFrame({
+          "Initial Solution Percentage": [0.1],  # Use list to create proper Series
+          "Cooling Rate": [0.95],  # Each value needs to be in a list
+          "Min Temp": [min_temps[0]],
+          "Max Iterations": [1000],
+          "Mk": [mk],
+          "Best Value": [results[1][0]],
+          "Weight": [results[1][1]],
+          "Total Items Selected": [np.sum(results[0])],
+          "Cooling Type": [cooling_type]
+      })
+
+      # Use pd.concat to append the new row
+      results_df = pd.concat([results_df, new_row], ignore_index=True)
+
+geometric_df = results_df[results_df["Cooling Type"] == "geometric"]
+boltzmann_df = results_df[results_df["Cooling Type"] == "boltzmann"]
+cauchy_df = results_df[results_df["Cooling Type"] == "cauchy"]
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=geometric_df, x="Mk", y="Best Value",  style="Cooling Type", markers=True, dashes=False)
+sns.lineplot(data=boltzmann_df, x="Mk", y="Best Value",  style="Cooling Type", markers=True, dashes=False)
+sns.lineplot(data=cauchy_df, x="Mk", y="Best Value",  style="Cooling Type", markers=True, dashes=False)
+plt.title("Best Value vs Mk")
+plt.xlabel("Mk")
+plt.ylabel("Best Value")
+plt.legend(title="Cool Schedule Type")
+plt.grid()
+plt.show()
+
+print(simulated_annealing(0.1,0.95,0.01,1000,50,'boltzmann'))
+
+exit()
 
 #-----------------------------------------------------------
 # Set the style of seaborn
-sns.set(style="whitegrid")
+sns.set_theme(style="whitegrid")
 # Create a DataFrame to store the results
 results_df = pd.DataFrame(columns=["Initial Solution Percentage", "Cooling Rate", "Min Temp", "Max Iterations", "Mk", "Best Value", "Weight", "Total Items Selected"])
 # Append the results to the DataFrame
-for init_sol_perc in init_solution_range:
-    for min_temp in min_temps:
-        for max_iter in max_iterations:
-            for mk in Mk_values:
-              for cooling_rate in cooling_rates:
-                  results = simulated_annealing(
-                      initial_solution_percentage=init_sol_perc/100,
-                      cooling_rate=cooling_rate,
-                      min_temp=min_temp,
-                      max_iterations=max_iter,
-                      Mk=mk
-                  )
-                  # Append the results to the DataFrame
-                  new_row = pd.DataFrame({
-                      "Initial Solution Percentage": [init_sol_perc],
-                      "Cooling Rate": [cooling_rate],
-                      "Min Temp": [min_temp],
-                      "Max Iterations": [max_iter],
-                      "Mk": [mk],
-                      "Best Value": [results[1][0]],
-                      "Weight": [results[1][1]],
-                      "Total Items Selected": [np.sum(results[0])]
-                  })
-                  results_df = pd.concat([results_df, new_row], ignore_index=True)
+for cooling_type in ['geometric', 'cauchy', 'boltzmann']:
+  for init_sol_perc in init_solution_range:
+      for min_temp in min_temps:
+          for max_iter in max_iterations:
+              for mk in Mk_values:
+                for cooling_rate in cooling_rates:
+                    results = simulated_annealing(
+                        initial_solution_percentage=init_sol_perc/100,
+                        cooling_rate=cooling_rate,
+                        min_temp=min_temp,
+                        max_iterations=max_iter,
+                        Mk=mk,
+                        cooling_schedule_type=cooling_type
+                    )
+                    # Append the results to the DataFrame
+                    new_row = pd.DataFrame({
+                        "Initial Solution Percentage": [init_sol_perc],
+                        "Cooling Rate": [cooling_rate],
+                        "Min Temp": [min_temp],
+                        "Max Iterations": [max_iter],
+                        "Mk": [mk],
+                        "Best Value": [results[1][0]],
+                        "Weight": [results[1][1]],
+                        "Total Items Selected": [np.sum(results[0])],
+                        "Cooling Type": [cooling_type]
+                    })
+                    results_df = pd.concat([results_df, new_row], ignore_index=True)
 # Plotting the results
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=results_df, x="Initial Solution Percentage", y="Best Value", hue="Cooling Rate", style="Mk", markers=True, dashes=False)
@@ -494,6 +593,18 @@ plt.ylabel("Best Value")
 plt.legend(title="Initial Solution Percentage and Cooling Rate")
 plt.grid()
 plt.show()
+
+# plotting different cooling types
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=results_df, x="Cooling Type", y="Best Value", hue="Initial Solution Percentage", style="Mk", markers=True, dashes=False)
+plt.title("Best Value vs Cooling Type")
+plt.xlabel("Cooling Type")
+plt.ylabel("Best Value")
+plt.legend(title="Initial Solution Percentage and Mk")
+plt.grid()
+plt.show()
+
+
 # Save the results to a CSV file
 results_df.to_csv("simulated_annealing_results.csv", index=False)
 

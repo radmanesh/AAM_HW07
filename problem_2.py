@@ -67,7 +67,7 @@ def createChromosome(d):
     #write code to generate chromosomes, most likely want this to be randomly generated
 
     x = [0]*d   #i recommend creating the solution as a list
-    percentage = 0.1
+    percentage = 0.15
     totalWeight = 0
     size = int(d*percentage)  #size of the chromosome to be randomly generated
     for i in range(size):
@@ -157,7 +157,7 @@ def evaluate(x):
     #you will VERY LIKELY need to add some penalties or sometype of modification of the totalvalue to compute the chromosome fitness
     #for instance, you may include penalties if the knapsack weight exceeds the maximum allowed weight
     if( totalWeight > maxWeight):
-        totalValue = totalValue - (totalWeight - maxWeight) * 10
+        totalValue = maxWeight - totalWeight
     fitness  = totalValue
 
     return fitness   #returns the chromosome fitness
