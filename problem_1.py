@@ -154,9 +154,7 @@ def initial_solution_random(percentage=0.1):
 
     return x   #return the solution
 
-# Simulated Annealing
-# This function will implement the simulated annealing algorithm
-# to find a good solution to the knapsack problem.
+# This function will implement the calculation of initial temperature for simulated annealing algorithm
 def initial_temperature(x_initial):
     """
     Determines an appropriate initial temperature for simulated annealing.

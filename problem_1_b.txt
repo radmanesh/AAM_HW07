@@ -1,0 +1,7 @@
+# Cooling schedule function
+def cooling_schedule(current_temp, alpha=0.95):
+    return current_temp * alpha
+
+# Exponential Cooling schedule function
+def cooling_schedule_exponential(current_temp, initial_temp):
+    return current_temp * (1 - (current_temp / initial_temp))  # Exponential cooling

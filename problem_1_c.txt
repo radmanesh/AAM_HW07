@@ -1,0 +1,8 @@
+# Acceptance probability function
+def acceptance_probability(delta, temperature):
+    # Always accept improving moves
+    if delta >= 0:
+        return 1.0
+
+    # For worsening moves, calculate probability based on Metropolis criterion
+    return math.exp(delta / temperature)

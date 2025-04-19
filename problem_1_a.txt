@@ -1,0 +1,39 @@
+# This function will implement the calculation of initial temperature for simulated annealing algorithm
+def initial_temperature(x_initial):
+    """
+    Determines an appropriate initial temperature for simulated annealing.
+    Samples random moves from the neighborhood and sets temperature based on average worsening move.
+    """
+
+    # Number of random samples to take
+    num_samples = 100
+    # List to store deltas of worsening moves
+    worsening_deltas = []
+
+    # Get current solution evaluation
+    current_eval = evaluate(x_initial)[0]
+
+    # Generate random neighbors and calculate deltas
+    for _ in range(num_samples):
+        # Select random index to flip
+        idx = myPRNG.randint(0, n-1)
+        neighbor = x_initial[:]
+        neighbor[idx] = 1 - neighbor[idx]  # Flip the bit
+
+        # Calculate delta (change in objective function)
+        neighbor_eval = evaluate(neighbor)[0]
+        delta = neighbor_eval - current_eval
+
+        # If it's a worsening move, record the delta
+        if delta < 0:
+            worsening_deltas.append(abs(delta))
+
+    # If no worsening moves found, return a default value
+    if not worsening_deltas:
+        return 100.0
+
+    # Set temperature so that average worsening move is accepted with ~80% probability
+    avg_worsening = sum(worsening_deltas) / len(worsening_deltas)
+    initial_temp = -avg_worsening / math.log(0.8)
+
+    return initial_temp
