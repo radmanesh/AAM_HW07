@@ -54,9 +54,9 @@ solutionsChecked = 0
 
 
 populationSize = 150 #size of GA population
-Generations = 100   #number of GA generations
+Generations = 1000   #number of GA generations
 
-crossOverRate = 0.8  #currently not used in the implementation; neeeds to be used.
+crossOverRate = 0.9  #currently not used in the implementation; neeeds to be used.
 mutationRate = 0.05  #currently not used in the implementation; neeeds to be used.
 eliteSolutions = 10  #currently not used in the implementation; neeed to use some type of elitism
 
@@ -268,7 +268,6 @@ def breeding(matingPool):
 
     return popVals
 
-kBestToKeep = 10  #number of best solutions to keep from the previous generation at most
 #insertion step
 def insert(pop,kids):
 
@@ -277,7 +276,7 @@ def insert(pop,kids):
     #maybe want to keep the top 5? 10? solutions from pop -- it's up to you.
 
     # Check the k best solutions from the previous generation and keep them in the new generation if they are better than the new ones
-    for i in range(kBestToKeep):
+    for i in range(eliteSolutions):
         if pop[i][1] > kids[i][1]:
             kids[i] = pop[i]
 
