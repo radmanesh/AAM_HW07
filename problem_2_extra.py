@@ -53,7 +53,7 @@ maxWeight = 2500
 solutionsChecked = 0
 
 
-populationSize = 5000 #size of GA population
+populationSize = 500 #size of GA population
 Generations = 10000   #number of GA generations
 
 #local search parameters
@@ -66,8 +66,8 @@ localSearchForce = True # set to True to force local search every localSearchWai
 # If set to True, local search will run every localSearchWait generations regardless of improvement.
 # If set to False, local search will only run after localSearchWait generations of no improvement.
 
-crossOverRate = 0.8  #currently not used in the implementation; neeeds to be used.
-mutationRate = 0.05  #currently not used in the implementation; neeeds to be used.
+crossOverRate = 0.9  #currently not used in the implementation; neeeds to be used.
+mutationRate = 0.08        #currently not used in the implementation; neeeds to be used.
 eliteSolutions = int(populationSize/20)  #currently not used in the implementation; neeed to use some type of elitism
 
 # local search functions
@@ -82,15 +82,15 @@ def neighborhood(x):
             nbrhood[i][i] = 1
     return nbrhood
 
+gene_selection_percentage = 0.10
 #create an continuous valued chromosome
 def createChromosome(d):
     #this code as-is expects chromosomes to be stored as a list, e.g., x = []
     #write code to generate chromosomes, most likely want this to be randomly generated
 
     x = [0]*d   #i recommend creating the solution as a list
-    percentage = 0.15
     totalWeight = 0
-    size = int(d*percentage)  #size of the chromosome to be randomly generated
+    size = int(d*gene_selection_percentage)  #size of the chromosome to be randomly generated
     for i in range(size):
         idx = myPRNG.randint(0,d-1)  #randomly select an index in the chromosome
         if x[idx] == 0:  #if the index is not already selected, then select it
@@ -318,12 +318,28 @@ def bestSolutionInPopulation(pop):
     print ("Value: ", pop[0][1])
     print ("Weight: ", calcWeight(pop[0][0]))
 
+localSearchSolutions = []
+
+# Do a local search on the instance and return the best solution
+def doLocalSearchPopulation(x):
+  Neighborhood = neighborhood(x[0])
+  bestSolution = x[0]
+  bestFitness = x[1]
+  for i in range(len(Neighborhood)):
+    fitness = evaluate(Neighborhood[i])
+    if fitness > bestFitness:
+      if(Neighborhood[i] not in localSearchSolutions):
+        localSearchSolutions.append(Neighborhood[i])
+        bestFitness = fitness
+        bestSolution = Neighborhood[i]
+        localSearchSolutions.append(bestSolution)
+  return bestSolution, bestFitness
 
 
+#this is the main function
 def main():
     #GA main code
     Population = initializePopulation()
-    print(10 )
 
     best_solution_fitness = Population[0][1]  #best solution to keep track of
 
@@ -334,48 +350,19 @@ def main():
 
     for j in range(Generations):
         #perform local search every localSearchWait generations
-        if (localSearch and localSeachIterationCount >= localSearchWait):
-            # print("Performing local search on best solutions...")
-            localSeachIterationCount = 0 # reset the local search wait counter
-            localSearchBestFitness = 0 # the best fitness of the local search seen in this generation
-            # Perform local search on localSearchBestLookup best solutions and replace (or add) them to the population
-            for i in range(localSearchBestLookup):
-                x_curr = Population[i][0][:]  #x_curr will hold the current solution
-                x_best = x_curr[:]           #x_best will hold the best solution
-                f_curr = Population[i][1]    #f_curr will hold the evaluation of the current soluton
-                f_best = f_curr
-                done = 0
-                while done == 0:
-                    # Get the neighborhood of the ith's best solution
-                    nbrhood = neighborhood(Population[i][0])
-                    for s in nbrhood:                #evaluate every member in the neighborhood of x_curr
-                        if evaluate(s) > f_best:
-                            x_best = s[:]                 #find the best member and keep track of that solution
-                            f_best = evaluate(s)       #and store its evaluation
-                    if f_best == f_curr:                  #if there were no improving solutions in the neighborhood
-                        done = 1
-                    else:
-                        x_curr = x_best[:]         #else: move to the neighbor solution and continue
-                        f_curr = f_best         #evalute the current solution
+        if localSearch:
+          if (localSeachIterationCount >= localSearchWait):
+              for i in range(len(Population)):
+                ls_best, ls_fitness = doLocalSearchPopulation(Population[i])
+                # if ls_fitness > best_solution_fitness:
+                if ls_fitness > Population[i][1]:
+                  print("Local search improved solution: ", ls_best, " with fitness: ", ls_fitness)
+                  Population[i] = (ls_best, ls_fitness)
 
-                #if the best solution is better than the current solution, then replace or add the current solution with the best solution
-                if f_best > Population[i][1]:
-                    if(f_best > localSearchBestFitness): # improvment over the best solution found so far
-                        localSearchBestFitness = f_best
-                        # Population[i] = (x_best, f_best) # replace the current solution with the best solution
-                        Population.append((x_best, f_best)) # add the best solution to the population
-                        print ("Local search improved solution: ", Population[i][1])
-                    else: # improvment is not better than the best solution found so far
-                        # check if the Population contains x_best, if not, add it
-                        if x_best not in [x[0] for x in Population]: # let's improve the instance
-                            Population.append((x_best, f_best))
-                            print ("Local search improved solution: ", Population[i][1])
-                else:
-                    # if the best solution is not better than the current solution, then do not replace the current solution
-                    print ("Local search did not improve solution: ", Population[i][1])
+              localSeachIterationCount = 0
 
-        # Increment the local search iteration count
-        localSeachIterationCount += 1
+          localSeachIterationCount+= 1 # increment the local search iteration count
+
 
         mates=tournamentSelection(Population,10)  #<--need to replace this with roulette wheel selection, e.g.:  mates=rouletteWheel(Population)
         Offspring = breeding(mates)
